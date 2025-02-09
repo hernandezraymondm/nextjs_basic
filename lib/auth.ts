@@ -70,6 +70,7 @@ export async function getAuthenticatedUser(req: NextRequest) {
   const accessToken = req.headers.get("Authorization")?.split(" ")[1];
   if (accessToken) {
     const user = await verifyAccessToken(accessToken);
+
     if (user) return user;
   }
   const cookieStore = await cookies();

@@ -1,5 +1,6 @@
 import { AuthProvider } from "@/app/auth-provider";
 import type { Metadata } from "next";
+import { Toaster } from "sonner";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -30,6 +31,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <main className="container mx-auto px-4 py-8">{children}</main>
+          <Toaster richColors />
         </AuthProvider>
       </body>
     </html>

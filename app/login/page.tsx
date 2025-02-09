@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "../auth-provider";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -17,7 +18,8 @@ export default function Login() {
       await login(email, password);
       router.push("/profile");
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("Login error:", error);
+      toast.error("Login failed. Please try again.");
     }
   };
 

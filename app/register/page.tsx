@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "../auth-provider";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import type React from "react";
+import { toast } from "sonner";
+import type React from "react"; // Added import for React
 
 export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const router = useRouter();
   const { register } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,6 +21,7 @@ export default function Register() {
       router.push("/profile");
     } catch (error) {
       console.error("Registration error:", error);
+      toast.error("Registration failed. Please try again.");
     }
   };
 
