@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { UserInfo } from "@/components/user-info";
 
 export default function Profile() {
-  const { user, logout, loading } = useAuth();
+  const { user, logout, loading, fetchUser } = useAuth();
   const [name, setName] = useState("");
   const router = useRouter();
 
@@ -41,6 +41,11 @@ export default function Profile() {
       });
 
       if (response.ok) {
+        if (accessToken) {
+          await fetchUser(accessToken);
+        } else {
+          throw new Error("No access token found");
+        }
         toast.success("Profile updated successfully");
       } else {
         throw new Error("Failed to update profile");

@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: config.REFRESH_COOKIE_EXPIRY, // 7 days
+    maxAge: config.REFRESH_COOKIE_EXPIRY,
     path: "/",
   });
 

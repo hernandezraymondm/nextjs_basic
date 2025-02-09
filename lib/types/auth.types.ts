@@ -11,4 +11,5 @@ export interface AuthContextType {
   refreshAccessToken: () => Promise<string | null>;
   register: (name: string, email: string, password: string) => Promise<void>;
   loading: boolean;
+  fetchUser: (token: string) => Promise<void>;
 }
