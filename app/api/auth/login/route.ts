@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { generateAccessToken, generateRefreshToken } from "@/lib/utils/auth";
 import { httpStatus } from "@/config/http.config";
-import { config } from "@/config/auth.config";
+import { config } from "@/config/app.config";
 
 export async function POST(req: Request) {
   const { email, password } = await req.json();

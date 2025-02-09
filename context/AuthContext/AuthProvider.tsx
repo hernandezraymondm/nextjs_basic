@@ -12,7 +12,7 @@ import {
 } from "@/services/auth.service";
 import { CustomError } from "@/lib/types/error.types";
 import { AuthContextType, User } from "@/lib/types/auth.types";
-import { config } from "@/config/auth.config";
+import { config } from "@/config/app.config";
 
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined

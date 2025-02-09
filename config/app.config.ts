@@ -8,7 +8,7 @@ const appConfig = () => ({
     ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET!,
     REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET!,
   },
-  API_BASE_PATH: "/api/auth",
+  API_BASE_PATH: "/api",
 });
 
 export const config = appConfig();

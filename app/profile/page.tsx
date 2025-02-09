@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { UserInfo } from "@/components/user-info";
+import { deleteUser, updateUser } from "@/services/user.service";
 
 export default function Profile() {
   const { user, logout, loading, fetchUser } = useAuth();
@@ -30,55 +31,33 @@ export default function Profile() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const accessToken = sessionStorage.getItem("accessToken");
-    try {
-      const response = await fetch("/api/user", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ name }),
-      });
-
-      if (response.ok) {
-        if (accessToken) {
-          await fetchUser(accessToken);
-        } else {
-          throw new Error("No access token found");
-        }
+    if (!accessToken) return;
+    await updateUser(name, accessToken)
+      .then(() => {
         toast.success("Profile updated successfully");
-      } else {
-        throw new Error("Failed to update profile");
-      }
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast.error("Failed to update profile. Please try again.");
-    }
+      })
+      .catch(() => {
+        toast.error("Failed to update profile. Please try again.");
+      })
+      .finally(() => {
+        fetchUser(accessToken);
+      });
   };
 
   const handleDelete = async () => {
     const accessToken = sessionStorage.getItem("accessToken");
     if (!accessToken) return;
-
-    try {
-      const response = await fetch("/api/user", {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (response.ok) {
+    await deleteUser(accessToken)
+      .then(() => {
         toast.success("User account deleted successfully");
-        await logout();
+      })
+      .catch(() => {
+        toast.error("Failed to delete account. Please try again.");
+      })
+      .finally(() => {
+        logout();
         router.push("/login");
-      } else {
-        throw new Error("Failed to delete user account");
-      }
-    } catch (error) {
-      console.error("Error deleting user account:", error);
-      toast.error("Failed to delete account. Please try again.");
-    }
+      });
   };
 
   const handleLogout = async () => {

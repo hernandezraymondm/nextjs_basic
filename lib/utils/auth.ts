@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { prisma } from "../prisma";
 import { cookies } from "next/headers";
 import { createHash, randomBytes } from "crypto";
-import { config } from "@/config/auth.config";
+import { config } from "@/config/app.config";
 
 export async function generateAccessToken(userId: string) {
   return await new SignJWT({ userId })
