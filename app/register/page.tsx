@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useAuth } from "../auth-provider";
-import { useRouter } from "next/navigation";
+import type React from "react";
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import type React from "react"; // Added import for React
 
 export default function Register() {
   const [name, setName] = useState("");

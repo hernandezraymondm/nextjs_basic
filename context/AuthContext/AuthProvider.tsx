@@ -1,46 +1,31 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
+import { useState, useEffect, useCallback, createContext } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import {
+  login as loginService,
+  logout as logoutService,
+  refreshAccessToken as refreshAccessTokenService,
+  register as registerService,
+  fetchUser as fetchUserService,
+} from "@/services/auth.service";
+import { CustomError } from "@/lib/types/error.types";
+import { AuthContextType, User } from "@/lib/types/auth.types";
+import { config } from "@/config/auth.config";
 
-export type AuthContextType = {
-  user: { id: string; email: string; name?: string } | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  refreshAccessToken: () => Promise<string | null>;
-  register: (name: string, email: string, password: string) => Promise<void>;
-  loading: boolean;
-};
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const TOKEN_REFRESH_INTERVAL = 4 * 60 * 1000; // 4 minutes
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<AuthContextType["user"]>(null);
+  const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Login failed");
-      }
-
-      const { accessToken } = await response.json();
+      const { accessToken } = await loginService(email, password);
       sessionStorage.setItem("accessToken", accessToken);
       await fetchUser(accessToken);
       toast.success("Logged in successfully");
@@ -53,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await logoutService();
       sessionStorage.removeItem("accessToken");
       setUser(null);
       toast.success("Logged out successfully");
@@ -65,11 +50,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshAccessToken = useCallback(async () => {
     try {
-      const response = await fetch("/api/auth/refresh", { method: "POST" });
-      if (!response.ok) return null;
-      const { accessToken } = await response.json();
-      sessionStorage.setItem("accessToken", accessToken);
-      return accessToken;
+      const { accessToken } = await refreshAccessTokenService();
+      if (accessToken) {
+        sessionStorage.setItem("accessToken", accessToken);
+        return accessToken;
+      }
+      return null;
     } catch (error) {
       console.error("Token refresh error:", error);
       return null;
@@ -78,17 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (name: string, email: string, password: string) => {
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Registration failed");
-      }
-
-      const { accessToken } = await response.json();
+      const { accessToken } = await registerService(name, email, password);
       sessionStorage.setItem("accessToken", accessToken);
       await fetchUser(accessToken);
       toast.success("Registered successfully");
@@ -124,22 +100,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const response = await fetch("/api/user", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        } else if (response.status === 401) {
-          const newToken = await handleApiError({ response });
+        const userData = await fetchUserService(token);
+        setUser(userData);
+      } catch (error: unknown) {
+        const err = error as CustomError;
+        if (
+          err.message === "Fetching user failed" &&
+          err.response &&
+          err.response.status === 401
+        ) {
+          const newToken = await handleApiError({ response: err.response });
           if (newToken) {
             await fetchUser(newToken);
           }
         }
-      } catch (error) {
         console.error("Error fetching user:", error);
-        await handleApiError(error);
       } finally {
         setLoading(false);
       }
@@ -163,7 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await fetchUser(newToken);
         }
       }
-    }, TOKEN_REFRESH_INTERVAL);
+    }, config.TOKEN_REFRESH_INTERVAL);
 
     return () => clearInterval(refreshTokenPeriodically);
   }, [fetchUser, refreshAccessToken]);
@@ -176,11 +151,3 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     </AuthContext.Provider>
   );
 }
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};

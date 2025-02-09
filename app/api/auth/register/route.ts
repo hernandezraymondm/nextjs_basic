@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { generateAccessToken, generateRefreshToken } from "@/lib/auth";
+import { generateAccessToken, generateRefreshToken } from "@/lib/utils/auth";
+import { httpStatus } from "@/config/http.config";
+import { config } from "@/config/auth.config";
 
 export async function POST(req: Request) {
   const { name, email, password } = await req.json();
@@ -9,7 +11,10 @@ export async function POST(req: Request) {
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
-    return NextResponse.json({ error: "User already exists" }, { status: 400 });
+    return NextResponse.json(
+      { error: "User already exists" },
+      { status: httpStatus.BAD_REQUEST }
+    );
   }
 
   // Hash password
@@ -33,7 +38,7 @@ export async function POST(req: Request) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60, // 7 days
+    maxAge: config.REFRESH_COOKIE_EXPIRY, // 7 days
     path: "/",
   });
 

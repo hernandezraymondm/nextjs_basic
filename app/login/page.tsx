@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { useAuth } from "../auth-provider";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 export default function Login() {

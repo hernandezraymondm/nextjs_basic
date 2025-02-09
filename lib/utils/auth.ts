@@ -1,18 +1,16 @@
 import { SignJWT, jwtVerify } from "jose";
-import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
-import { prisma } from "./prisma";
+import { prisma } from "../prisma";
+import { cookies } from "next/headers";
 import { createHash, randomBytes } from "crypto";
-
-const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET!;
-const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!;
+import { config } from "@/config/auth.config";
 
 export async function generateAccessToken(userId: string) {
   return await new SignJWT({ userId })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("15m")
     .setJti(randomBytes(16).toString("hex"))
-    .sign(new TextEncoder().encode(ACCESS_TOKEN_SECRET));
+    .sign(new TextEncoder().encode(config.SECRET.ACCESS_TOKEN_SECRET));
 }
 
 export async function generateRefreshToken(userId: string) {
@@ -20,7 +18,7 @@ export async function generateRefreshToken(userId: string) {
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("7d")
     .setJti(randomBytes(16).toString("hex"))
-    .sign(new TextEncoder().encode(REFRESH_TOKEN_SECRET));
+    .sign(new TextEncoder().encode(config.SECRET.REFRESH_TOKEN_SECRET));
 
   const hashedToken = createHash("sha256").update(token).digest("hex");
 
@@ -28,7 +26,7 @@ export async function generateRefreshToken(userId: string) {
     data: {
       userId,
       refreshToken: hashedToken,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      expiresAt: config.REFRESH_DB_SESSION_EXPIRY,
     },
   });
 
@@ -39,7 +37,7 @@ export async function verifyAccessToken(token: string) {
   try {
     const verified = await jwtVerify(
       token,
-      new TextEncoder().encode(ACCESS_TOKEN_SECRET)
+      new TextEncoder().encode(config.SECRET.ACCESS_TOKEN_SECRET)
     );
     return verified.payload as { userId: string };
   } catch {
@@ -51,7 +49,7 @@ export async function verifyRefreshToken(token: string) {
   try {
     const verified = await jwtVerify(
       token,
-      new TextEncoder().encode(REFRESH_TOKEN_SECRET)
+      new TextEncoder().encode(config.SECRET.REFRESH_TOKEN_SECRET)
     );
     if (!verified) {
       return null;

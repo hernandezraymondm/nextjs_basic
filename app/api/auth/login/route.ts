@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { generateAccessToken, generateRefreshToken } from "@/lib/auth";
+import { generateAccessToken, generateRefreshToken } from "@/lib/utils/auth";
+import { httpStatus } from "@/config/http.config";
+import { config } from "@/config/auth.config";
 
 export async function POST(req: Request) {
   const { email, password } = await req.json();
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !(await bcrypt.compare(password, user.password))) {
-    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Invalid credentials" },
+      { status: httpStatus.UNAUTHORIZED }
+    );
   }
 
   const accessToken = await generateAccessToken(user.id);
@@ -19,7 +24,7 @@ export async function POST(req: Request) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60, // 7 days
+    maxAge: config.REFRESH_COOKIE_EXPIRY, // 7 days
     path: "/",
   });
 

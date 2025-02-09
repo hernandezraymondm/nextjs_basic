@@ -1,10 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { useAuth } from "@/app/auth-provider";
+import { UserInfo } from "@/components/user-info";
 
 export default function Profile() {
   const { user, logout, loading } = useAuth();
@@ -88,11 +89,11 @@ export default function Profile() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            User Profile
-          </h2>
-        </div>
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          User Profile
+        </h2>
+        <UserInfo user={user} label="Information" />
+
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
@@ -106,7 +107,7 @@ export default function Profile() {
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Name"
-                value={user?.name}
+                value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
