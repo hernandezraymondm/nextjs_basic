@@ -2,6 +2,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
 import { prisma } from "./prisma";
+import { createHash, randomBytes } from "crypto";
 
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET!;
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!;
@@ -10,6 +11,7 @@ export async function generateAccessToken(userId: string) {
   return await new SignJWT({ userId })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("15m")
+    .setJti(randomBytes(16).toString("hex"))
     .sign(new TextEncoder().encode(ACCESS_TOKEN_SECRET));
 }
 
@@ -17,12 +19,15 @@ export async function generateRefreshToken(userId: string) {
   const token = await new SignJWT({ userId })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("7d")
+    .setJti(randomBytes(16).toString("hex"))
     .sign(new TextEncoder().encode(REFRESH_TOKEN_SECRET));
+
+  const hashedToken = createHash("sha256").update(token).digest("hex");
 
   await prisma.session.create({
     data: {
       userId,
-      refreshToken: token,
+      refreshToken: hashedToken,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
     },
   });
@@ -51,8 +56,10 @@ export async function verifyRefreshToken(token: string) {
     if (!verified) {
       return null;
     }
+
+    const hashedToken = createHash("sha256").update(token).digest("hex");
     const session = await prisma.session.findUnique({
-      where: { refreshToken: token },
+      where: { refreshToken: hashedToken },
       include: { user: true },
     });
 
@@ -84,4 +91,8 @@ export async function getAuthenticatedUser(req: NextRequest) {
   }
 
   return null;
+}
+
+export function hashPassword(password: string): string {
+  return createHash("sha256").update(password).digest("hex");
 }
